@@ -56,12 +56,14 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _BumpScale: 0
+    - _BevelFactor: 0
+    - _BumpScale: 0.25
     - _Cutoff: 0.5
     - _DebugForceRough: 0
     - _DebugForceSmooth: 0
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
+    - _EnableBevelBoxProjection: 0
     - _EnableContactHardening: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.5
@@ -70,11 +72,11 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _Smoothness: 0.723
+    - _Smoothness: 0.502
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _Test1: 1.08
+    - _Test1: 0
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:

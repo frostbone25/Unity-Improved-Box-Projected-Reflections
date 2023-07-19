@@ -5,7 +5,6 @@
         [Header(Debugging)]
         [Toggle(_DEBUG_FORCE_ROUGH)] _DebugForceRough("Force Rough", Float) = 0
         [Toggle(_DEBUG_FORCE_SMOOTH)] _DebugForceSmooth("Force Smooth", Float) = 0
-        _Test1("Test1", Float) = 0
 
         [Header(Rendering)]
         [Toggle(_CONTACT_HARDENING)] _EnableContactHardening("Contact Hardening", Float) = 1
@@ -14,6 +13,10 @@
         _Smoothness ("Smoothness", Range(0, 1)) = 0.75
         _BumpScale("Normal Strength", Float) = 1
         [Normal] _BumpMap("Normal Map", 2D) = "bump" {}
+
+        [Header(Experimental)]
+        [Toggle(_EXPERIMENTAL_BEVELED_BOX_PROJECTION)] _EnableBevelBoxProjection("Use Beveled Box Projection", Float) = 0
+        _BevelFactor("Bevel Factor", Float) = 0
     }
     SubShader
     {
@@ -54,6 +57,7 @@
             #pragma shader_feature_local _CONTACT_HARDENING
             #pragma shader_feature_local _DEBUG_FORCE_ROUGH
             #pragma shader_feature_local _DEBUG_FORCE_SMOOTH
+            #pragma shader_feature_local _EXPERIMENTAL_BEVELED_BOX_PROJECTION
 
             sampler2D _BumpMap;
             float4 _BumpMap_ST;
@@ -61,46 +65,12 @@
             float _BumpScale;
             float _Smoothness;
 
-            float _Test1;
+            float _BevelFactor;
 
             //||||||||||||||||||||||||||||| UNITY BOX PROJECTION |||||||||||||||||||||||||||||
             //||||||||||||||||||||||||||||| UNITY BOX PROJECTION |||||||||||||||||||||||||||||
             //||||||||||||||||||||||||||||| UNITY BOX PROJECTION |||||||||||||||||||||||||||||
-            // Unity3d original box projected functions
-
-            /*
-            inline float3 UnityBoxProjectedCubemapDirection(float3 worldRefl, float3 worldPos, float4 cubemapCenter, float4 boxMin, float4 boxMax)
-            {
-                // Do we have a valid reflection probe?
-                UNITY_BRANCH
-                if (cubemapCenter.w > 0.0)
-                {
-                    float3 nrdir = normalize(worldRefl);
-
-                    #if 1
-                        float3 rbmax = (boxMax.xyz - worldPos) / nrdir;
-                        float3 rbmin = (boxMin.xyz - worldPos) / nrdir;
-
-                        float3 rbminmax = (nrdir > 0.0f) ? rbmax : rbmin;
-
-                    #else // Optimized version
-                        float3 rbmax = (boxMax.xyz - worldPos);
-                        float3 rbmin = (boxMin.xyz - worldPos);
-
-                        float3 select = step(float3(0, 0, 0), nrdir);
-                        float3 rbminmax = lerp(rbmax, rbmin, select);
-                        rbminmax /= nrdir;
-                    #endif
-
-                    float fa = min(min(rbminmax.x, rbminmax.y), rbminmax.z);
-
-                    worldPos -= cubemapCenter.xyz;
-                    worldRefl = worldPos + nrdir * fa;
-                }
-
-                return worldRefl;
-            }
-            */
+            // Slightly modified version of unity's original box projected function to output the hit distance
 
             inline float3 UnityBoxProjectedCubemapDirection(float3 worldRefl, float3 worldPos, float4 cubemapCenter, float4 boxMin, float4 boxMax, out float distanceToHitPoint)
             {
@@ -134,111 +104,12 @@
                 return worldRefl;
             }
 
-            //||||||||||||||||||||||||||||| MODIFIED BOX PROJECTION |||||||||||||||||||||||||||||
-            //||||||||||||||||||||||||||||| MODIFIED BOX PROJECTION |||||||||||||||||||||||||||||
-            //||||||||||||||||||||||||||||| MODIFIED BOX PROJECTION |||||||||||||||||||||||||||||
-
+            //||||||||||||||||||||||||||||| BEVELED BOX PROJECTION |||||||||||||||||||||||||||||
+            //||||||||||||||||||||||||||||| BEVELED BOX PROJECTION |||||||||||||||||||||||||||||
+            //||||||||||||||||||||||||||||| BEVELED BOX PROJECTION |||||||||||||||||||||||||||||
             // stolen from - https://iquilezles.org/articles/intersectors/
             // axis aligned box centered at the origin, with dimensions "size" and extruded by "rad"
-            float roundedboxIntersect(float3 ro, float3 rd, float3 size, float rad)
-            {
-                // bounding box
-                float3 m = 1.0 / rd;
-                float3 n = m * ro;
-                float3 k = abs(m) * (size + rad);
-                float3 t1 = -n - k;
-                float3 t2 = -n + k;
-                float tN = max(max(t1.x, t1.y), t1.z);
-                float tF = min(min(t2.x, t2.y), t2.z);
-
-                if (tN > tF || tF < 0.0) 
-                    return -1.0;
-
-                float t = tN;
-
-                // convert to first octant
-                float3 pos = ro + t * rd;
-                float3 s = sign(pos);
-                ro *= s;
-                rd *= s;
-                pos *= s;
-
-                // faces
-                pos -= size;
-                pos = max(pos.xyz, pos.yzx);
-
-                if (min(min(pos.x, pos.y), pos.z) < 0.0) 
-                    return t;
-
-                // some precomputation
-                float3 oc = ro - size;
-                float3 dd = rd * rd;
-                float3 oo = oc * oc;
-                float3 od = oc * rd;
-                float ra2 = rad * rad;
-
-                t = 1e20;
-
-                // corner
-                {
-                    float b = od.x + od.y + od.z;
-                    float c = oo.x + oo.y + oo.z - ra2;
-                    float h = b * b - c;
-
-                    if (h > 0.0) 
-                        t = -b - sqrt(h);
-                }
-                // edge X
-                {
-                    float a = dd.y + dd.z;
-                    float b = od.y + od.z;
-                    float c = oo.y + oo.z - ra2;
-                    float h = b * b - a * c;
-                    if (h > 0.0)
-                    {
-                        h = (-b - sqrt(h)) / a;
-
-                        if (h > 0.0 && h < t && abs(ro.x + rd.x * h) < size.x) 
-                            t = h;
-                    }
-                }
-                // edge Y
-                {
-                    float a = dd.z + dd.x;
-                    float b = od.z + od.x;
-                    float c = oo.z + oo.x - ra2;
-                    float h = b * b - a * c;
-                    if (h > 0.0)
-                    {
-                        h = (-b - sqrt(h)) / a;
-
-                        if (h > 0.0 && h < t && abs(ro.y + rd.y * h) < size.y) 
-                            t = h;
-                    }
-                }
-                // edge Z
-                {
-                    float a = dd.x + dd.y;
-                    float b = od.x + od.y;
-                    float c = oo.x + oo.y - ra2;
-                    float h = b * b - a * c;
-                    if (h > 0.0)
-                    {
-                        h = (-b - sqrt(h)) / a;
-
-                        if (h > 0.0 && h < t && abs(ro.z + rd.z * h) < size.z) 
-                            t = h;
-                    }
-                }
-
-                if (t > 1e19) 
-                    t = -1.0;
-
-                return t;
-            }
-
-            // stolen from - https://iquilezles.org/articles/intersectors/
-            // axis aligned box centered at the origin, with dimensions "size" and extruded by "rad"
+            // NOTE: This is a modified version meant to be tracing inside of the box.
             float roundedboxIntersectFlipped(float3 ro, float3 rd, float3 size, float rad)
             {
                 // bounding box
@@ -253,7 +124,7 @@
                 if (tN > tF || tF < 0.0)
                     return -1.0;
 
-                float t = tN;
+                float t = tF;
 
                 // convert to first octant
                 float3 pos = ro + t * rd;
@@ -278,15 +149,6 @@
 
                 t = 1e20;
 
-                // corner
-                {
-                    float b = od.x + od.y + od.z;
-                    float c = oo.x + oo.y + oo.z - ra2;
-                    float h = b * b - c;
-
-                    if (h > 0.0)
-                        t = -b - sqrt(h);
-                }
                 // edge X
                 {
                     float a = dd.y + dd.z;
@@ -295,9 +157,9 @@
                     float h = b * b - a * c;
                     if (h > 0.0)
                     {
-                        h = (-b - sqrt(h)) / a;
+                        h = (-b + sqrt(h)) / a;
 
-                        if (h > 0.0 && h > t && abs(ro.x + rd.x * h) < size.x)
+                        if (h > 0.0 && h < t && abs(ro.x + rd.x * h) < size.x)
                             t = h;
                     }
                 }
@@ -309,13 +171,13 @@
                     float h = b * b - a * c;
                     if (h > 0.0)
                     {
-                        h = (-b - sqrt(h)) / a;
+                        h = (-b + sqrt(h)) / a;
 
-                        if (h > 0.0 && h > t && abs(ro.y + rd.y * h) < size.y)
+                        if (h > 0.0 && h < t && abs(ro.y + rd.y * h) < size.y)
                             t = h;
                     }
                 }
-                // edge Z
+                // Edge Z
                 {
                     float a = dd.x + dd.y;
                     float b = od.x + od.y;
@@ -323,11 +185,20 @@
                     float h = b * b - a * c;
                     if (h > 0.0)
                     {
-                        h = (-b - sqrt(h)) / a;
+                        h = (-b + sqrt(h)) / a;
 
-                        if (h > 0.0 && h > t && abs(ro.z + rd.z * h) < size.z)
+                        if (h > 0.0 && h < t && abs(ro.z + rd.z * h) < size.z)
                             t = h;
                     }
+                }
+                // corner
+                {
+                    float b = od.x + od.y + od.z;
+                    float c = oo.x + oo.y + oo.z - ra2;
+                    float h = b * b - c;
+
+                    if (h > 0.0)
+                        t = -b + sqrt(h);
                 }
 
                 if (t > 1e19)
@@ -336,21 +207,19 @@
                 return t;
             }
 
-            inline float3 ModifiedBoxProjectedCubemapDirection(float3 worldRefl, float3 worldPos, float4 cubemapCenter, float4 boxMin, float4 boxMax, out float fa)
+            inline float3 ModifiedBoxProjectedCubemapDirection(float3 worldRefl, float3 worldPos, float4 cubemapCenter, float4 boxMin, float4 boxMax, out float fa, float factor)
             {
-                float3 nrdir = normalize(worldRefl);
-
-                float3 rbmax = (boxMax.xyz - worldPos) / nrdir;
-                float3 rbmin = (boxMin.xyz - worldPos) / nrdir;
-
-                float3 rbminmax = (nrdir > 0.0f) ? rbmax : rbmin;
-
-                fa = min(min(rbminmax.x, rbminmax.y), rbminmax.z);
-
+                //boxMax.xyz = boxMax.xyz - float3(factor, factor, factor);
+                //boxMin.xyz = boxMin.xyz + float3(factor, factor, factor);
                 worldPos -= cubemapCenter.xyz;
-                worldRefl = worldPos + nrdir * fa;
 
-                return worldRefl;
+                float intersectionTest = roundedboxIntersectFlipped(worldPos, worldRefl, (boxMax - boxMin) * 0.5, factor);
+                fa = intersectionTest;
+
+                float3 nrdir = normalize(worldRefl);
+                float3 modifiedWorldRefl = worldPos + nrdir * intersectionTest;
+
+                return modifiedWorldRefl;
             }
 
             struct appdata
@@ -443,34 +312,21 @@
 
                 //if box projection is enabled, modify our vector to project reflections onto a world space box (defined by the reflection probe)
                 //#if defined(UNITY_SPECCUBE_BOX_PROJECTION)
-                    vector_reflectionDirection = UnityBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset);
-                    //vector_reflectionDirection = ModifiedBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset);
+                    #if defined (_EXPERIMENTAL_BEVELED_BOX_PROJECTION)
+                        vector_reflectionDirection = ModifiedBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset, _BevelFactor);
+                    #else
+                        vector_reflectionDirection = UnityBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset);
+                    #endif
                 //#endif
 
-                //return float4(vector_reflectionDirection, 1);
-                //float mipOffset = length(vector_reflectionDirection);
-
+                //used for sampling blurry/sharp glossy reflections.
                 #if defined (_CONTACT_HARDENING)
-                    float3 vector_surfaceReflectionDirection = reflect(-vector_viewDirection, vector_normalDirection);
-
-                    float3 boxMin = (unity_SpecCube0_BoxMin * 2.0) - vector_worldPosition.xyz;
-                    float3 boxMax = (unity_SpecCube0_BoxMax * 2.0) - vector_worldPosition.xyz;
-
-                    //float mipOffset = RayBoxDistance(vector_worldPosition, reflect(-vector_viewDirection, vector_normalDirection), boxMin, boxMax);
-
-                    //return float4(mipOffset, mipOffset, mipOffset, 1);
-
-                    //used for sampling blurry/sharp glossy reflections.
-                    //float mip = perceptualRoughnessToMipmapLevel(perceptualRoughness * (mipOffset / length(vector_reflectionDirection)));
-
                     float mip = perceptualRoughnessToMipmapLevel(perceptualRoughness);
 
-                    mip *= mipOffset / UNITY_SPECCUBE_LOD_STEPS;
-                    //mip = lerp(perceptualRoughnessToMipmapLevel(perceptualRoughness), mip, smoothness);
-                    //mip = max(mip, perceptualRoughnessToMipmapLevel(perceptualRoughness));
+                    mip *= (mipOffset / UNITY_SPECCUBE_LOD_STEPS);
+                    //mip *= (mipOffset / UNITY_SPECCUBE_LOD_STEPS) + perceptualRoughness;
 
                 #else
-                    //used for sampling blurry/sharp glossy reflections.
                     float mip = perceptualRoughnessToMipmapLevel(perceptualRoughness);
                 #endif
 
