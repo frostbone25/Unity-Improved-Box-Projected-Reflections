@@ -35,9 +35,9 @@ Using a beveled box projection with an adjustable bevel factor. Idea is to smoot
 ### TODO:
 
 - Use Blue Noise for better perceptual quality.
-- Use reflection cubemap luminance to allocate more rays to brighter areas.
-- Use mips to reduce noise and the amount of rays needed.
-- Option for animated noise
+- Use reflection cubemap luminance for better ray allocation.
+- Use mips to reduce samples/noise.
+- Animated noise.
 - Quad Intrinsics?
 
 ## Results
