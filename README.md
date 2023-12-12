@@ -1,5 +1,5 @@
 # Improved Box Projected Reflections
-A work-in-progress attempt at improving Box Projected Reflections within unity.
+A work-in-progress attempt at improving Box Projected Reflections.
 
 ## Contact Hardening
 
