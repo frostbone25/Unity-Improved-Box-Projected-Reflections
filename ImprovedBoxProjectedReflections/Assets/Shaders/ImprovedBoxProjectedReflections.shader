@@ -206,13 +206,13 @@ Shader "ImprovedBoxProjectedReflections"
                     float mipOffset = 0;
 
                     //if box projection is enabled, modify our vector to project reflections onto a world space box (defined by the reflection probe)
-                    #if defined (UNITY_SPECCUBE_BOX_PROJECTION)
+                    //#if defined (UNITY_SPECCUBE_BOX_PROJECTION)
                         #if defined (_EXPERIMENTAL_BEVELED_BOX_PROJECTION)
                             vector_reflectionDirection = ModifiedBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset, _BevelFactor);
                         #else
                             vector_reflectionDirection = UnityBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset);
                         #endif
-                    #endif
+                    //#endif
 
                     float smoothness = _Smoothness;
                     float perceptualRoughness = 1.0 - smoothness;
@@ -233,13 +233,13 @@ Shader "ImprovedBoxProjectedReflections"
                     float mipOffset = 0;
 
                     //if box projection is enabled, modify our vector to project reflections onto a world space box (defined by the reflection probe)
-                    #if defined (UNITY_SPECCUBE_BOX_PROJECTION)
+                    //#if defined (UNITY_SPECCUBE_BOX_PROJECTION)
                         #if defined (_EXPERIMENTAL_BEVELED_BOX_PROJECTION)
                             vector_reflectionDirection = ModifiedBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset, _BevelFactor);
                         #else
                             vector_reflectionDirection = UnityBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset);
                         #endif
-                    #endif
+                    //#endif
 
                     //used for sampling blurry/sharp glossy reflections.
                     float mip = perceptualRoughnessToMipmapLevel(perceptualRoughness);
@@ -269,13 +269,13 @@ Shader "ImprovedBoxProjectedReflections"
                         float mipOffset;
 
                         //if box projection is enabled, modify our vector to project reflections onto a world space box (defined by the reflection probe)
-                        #if defined (UNITY_SPECCUBE_BOX_PROJECTION)
+                        //#if defined (UNITY_SPECCUBE_BOX_PROJECTION)
                             #if defined (_EXPERIMENTAL_BEVELED_BOX_PROJECTION)
                                 vector_reflectionDirection = ModifiedBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset, _BevelFactor);
                             #else
                                 vector_reflectionDirection = UnityBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset);
                             #endif
-                        #endif
+                        //#endif
 
                         float4 enviormentReflectionSample = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, vector_reflectionDirection.xyz, 0);
                         enviormentReflectionSample.rgb = DecodeHDR(enviormentReflectionSample, unity_SpecCube0_HDR);

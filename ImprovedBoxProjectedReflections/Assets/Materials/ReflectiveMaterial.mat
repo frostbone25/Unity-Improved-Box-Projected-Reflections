@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: ReflectiveMaterial
   m_Shader: {fileID: 4800000, guid: 20c7306c14bd2ae43871ea3ec5e58b65, type: 3}
-  m_ShaderKeywords: _CONTACTHARDENINGTYPE_TRACED _CONTACT_HARDENING _NORMALMAP
+  m_ShaderKeywords: _CONTACTHARDENINGTYPE_APPROXIMATED _CONTACT_HARDENING _NORMALMAP
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -57,9 +57,9 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _BevelBoxOffset: 0
-    - _BevelFactor: 0.79
+    - _BevelFactor: 1
     - _BumpScale: 0
-    - _ContactHardeningType: 2
+    - _ContactHardeningType: 1
     - _Cutoff: 0.5
     - _DebugForceRough: 0
     - _DebugForceSmooth: 0
@@ -75,7 +75,7 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _Seed: 0
-    - _Smoothness: 0.729
+    - _Smoothness: 0.725
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
