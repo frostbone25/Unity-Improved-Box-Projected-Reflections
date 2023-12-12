@@ -1,10 +1,3 @@
-/*
-* https://github.com/Unity-Technologies/Graphics/blob/master/Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl
-* https://github.com/Unity-Technologies/Graphics/blob/master/Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonLighting.hlsl
-* https://github.com/Unity-Technologies/Graphics/blob/master/Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl
-* https://github.com/Unity-Technologies/Graphics/blob/master/Packages/com.unity.render-pipelines.core/ShaderLibrary/Random.hlsl
-*/
-
 Shader "ImprovedBoxProjectedReflections"
 {
     Properties
@@ -252,6 +245,11 @@ Shader "ImprovedBoxProjectedReflections"
                     enviormentReflection.rgb = DecodeHDR(enviormentReflection, unity_SpecCube0_HDR);
                 #elif defined (_CONTACTHARDENINGTYPE_TRACED)
                     float4 enviormentReflection = float4(0, 0, 0, 0);
+
+                    float smoothness = _Smoothness;
+                    float perceptualRoughness = 1.0 - smoothness;
+                    float roughness = perceptualRoughness * perceptualRoughness; //offical roughness term for pbr shading
+
                     int samples = int(_TraceSamples);
                     int accumulatedSamples = 0;
 
@@ -261,7 +259,7 @@ Shader "ImprovedBoxProjectedReflections"
 
                         bool valid;
 
-                        half3 vector_reflectionDirection = ImportanceSampleGGX_VNDF(random, vector_normalDirection, vector_viewDirection, _Smoothness, valid);
+                        half3 vector_reflectionDirection = ImportanceSampleGGX_VNDF(random, vector_normalDirection, vector_viewDirection, roughness, valid);
 
                         if (!valid)
                             break;

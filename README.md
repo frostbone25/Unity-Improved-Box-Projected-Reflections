@@ -32,13 +32,13 @@ Classic box projection, it's fast but has sharp edges and can look jarring espec
 
 Using a beveled box projection with an adjustable bevel factor. Idea is to smooth out the sharp edges you'd get with the classic method. Has artifacts at high bevel values.
 
-### TODO:
+### TODO/Ideas:
 
 - Use Blue Noise for better perceptual quality.
-- Use reflection cubemap luminance for better ray allocation.
 - Use mips to reduce samples/noise.
 - Animated noise.
 - Quad Intrinsics?
+- Use reflection cubemap luminance for better ray allocation?
 
 ## Results
 
