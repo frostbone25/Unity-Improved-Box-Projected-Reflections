@@ -52,6 +52,7 @@ Granted the current implementation has artifacts at high bevel values, and also 
 
 ### TODO/Ideas:
 
+- Approximated: A more mathematically/optically plausible function for contact hardening.
 - Traced: Use Blue Noise for better perceptual quality.
 - Traced: Importance Sampling *(by using the already provided mips to reduce required samples/noise. Could also use the luminance of the cubemap for importance sampling)*
 - Traced: Animated noise.
