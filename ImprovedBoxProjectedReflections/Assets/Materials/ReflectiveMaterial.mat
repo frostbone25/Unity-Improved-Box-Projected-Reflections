@@ -10,7 +10,7 @@ Material:
   m_Name: ReflectiveMaterial
   m_Shader: {fileID: 4800000, guid: 20c7306c14bd2ae43871ea3ec5e58b65, type: 3}
   m_ShaderKeywords: _APPROXIMATED_CLAMP _CONTACTHARDENINGTYPE_APPROXIMATED _CONTACTHARDENINGTYPE_RAYTRACED
-    _CONTACT_HARDENING _NORMALMAP _REFLECTIONRENDERINGTYPE_RAYTRACING
+    _CONTACT_HARDENING _NORMALMAP _REFLECTIONRENDERINGTYPE_APPROXIMATEDHDRP
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -87,7 +87,11 @@ Material:
     - _DstBlend: 0
     - _Enable2x2Blur: 0
     - _EnableBevelBoxProjection: 0
+    - _EnableBoxSpecularOcclusion: 0
     - _EnableContactHardening: 1
+    - _ExperimentalSpecularOcclusionIntensity: 1
+    - _ExperimentalSpecularOcclusionMultiplier: 0.13
+    - _ExperimentalSpecularOcclusionPower: 1.24
     - _GlossMapScale: 1
     - _Glossiness: 0.756
     - _GlossyReflections: 1
@@ -95,10 +99,10 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _ReflectionRenderingType: 3
+    - _ReflectionRenderingType: 2
     - _Samples: 64
     - _Seed: 0
-    - _Smoothness: 0.735
+    - _Smoothness: 0.672
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1

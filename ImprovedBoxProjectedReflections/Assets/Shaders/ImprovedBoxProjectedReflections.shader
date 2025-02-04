@@ -31,6 +31,10 @@
         [Toggle(_EXPERIMENTAL_BEVELED_BOX_PROJECTION)] _EnableBevelBoxProjection("Use Beveled Box Projection", Float) = 0
         [Toggle(_EXPERIMENTAL_BEVELED_BOX_OFFSET)] _BevelBoxOffset("Use Bevel Factor Offset", Float) = 0
         _BevelFactor("Bevel Factor", Float) = 0
+        [Toggle(_EXPERIMENTAL_BOX_SPECULAR_OCCLUSION)] _EnableBoxSpecularOcclusion("Use Box Based Specular Occlusion", Float) = 0
+        _ExperimentalSpecularOcclusionIntensity("Occlusion Intensity", Range(0, 1)) = 1
+        _ExperimentalSpecularOcclusionMultiplier("Occlusion Multiplier", Float) = 1
+        _ExperimentalSpecularOcclusionPower("Occlusion Power", Float) = 1
     }
     SubShader
     {
@@ -77,6 +81,7 @@
             #pragma shader_feature_local _EXPERIMENTAL_BEVELED_BOX_PROJECTION
             #pragma shader_feature_local _EXPERIMENTAL_BEVELED_BOX_OFFSET
             #pragma shader_feature_local _EXPERIMENTAL_2X2_BLUR
+            #pragma shader_feature_local _EXPERIMENTAL_BOX_SPECULAR_OCCLUSION
 
             //||||||||||||||||||||||||||||| UNITY3D INCLUDES |||||||||||||||||||||||||||||
             //||||||||||||||||||||||||||||| UNITY3D INCLUDES |||||||||||||||||||||||||||||
@@ -108,14 +113,20 @@
             float4 _BumpMap_ST; //(X = Tiling X | Y = Tiling Y | Z = Offset X | W = Offset Y)
 
             float _BumpScale;
+
             float _Smoothness;
 
             float _BevelFactor;
+
             float _Samples;
 
             sampler3D _BlueNoise;
             int _BlueNoiseMaxSlices;
             float4 _BlueNoise_TexelSize; //(X = 1 / Width | Y = 1 / Height | Z = Width | W = Height)
+
+            float _ExperimentalSpecularOcclusionIntensity;
+            float _ExperimentalSpecularOcclusionMultiplier;
+            float _ExperimentalSpecularOcclusionPower;
 
             //||||||||||||||||||||||||||||| CUSTOM FUNCTIONS |||||||||||||||||||||||||||||
             //||||||||||||||||||||||||||||| CUSTOM FUNCTIONS |||||||||||||||||||||||||||||
@@ -436,12 +447,33 @@
                     enviormentReflection /= accumulatedSamples;
                 #endif
 
+                //experimental feature for using the hit distance to do specular occlusion
+                #if defined (_EXPERIMENTAL_BOX_SPECULAR_OCCLUSION)
+                    //recompute reflection direction
+                    float3 vector_specularOcclusionReflectionDirection = reflect(-vector_viewDirection, vector_normalDirection);
+
+                    //This is the output hit distance, but we will use it as our specular occlusion factor
+                    float specularOcclusionFactor = 0;
+
+                    vector_specularOcclusionReflectionDirection = UnityBoxProjectedCubemapDirectionDefault(vector_specularOcclusionReflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, specularOcclusionFactor);
+
+                    //artistic parameters for specular occlusion
+                    specularOcclusionFactor = pow(specularOcclusionFactor, _ExperimentalSpecularOcclusionPower);
+                    specularOcclusionFactor *= _ExperimentalSpecularOcclusionMultiplier;
+
+                    //clamp so we stay within 0..1
+                    specularOcclusionFactor = saturate(specularOcclusionFactor);
+
+                    //apply to environment reflection
+                    enviormentReflection *= lerp(1.0f, specularOcclusionFactor, _ExperimentalSpecularOcclusionIntensity);
+                #endif
+
                 //if enabled, here at the end of the function we do a janky 2x2 blur across the quads
                 #if defined (_EXPERIMENTAL_2X2_BLUR)
-                enviormentReflection = (QuadReadLaneAt(enviormentReflection, uint2(0, 0)) +
-                QuadReadLaneAt(enviormentReflection, uint2(1, 0)) + 
-                QuadReadLaneAt(enviormentReflection, uint2(0, 1)) + 
-                QuadReadLaneAt(enviormentReflection, uint2(1, 1))) * 0.25;
+                    enviormentReflection = (QuadReadLaneAt(enviormentReflection, uint2(0, 0)) +
+                    QuadReadLaneAt(enviormentReflection, uint2(1, 0)) + 
+                    QuadReadLaneAt(enviormentReflection, uint2(0, 1)) + 
+                    QuadReadLaneAt(enviormentReflection, uint2(1, 1))) * 0.25;
                 #endif
 
                 return float4(enviormentReflection.rgb, 1);
