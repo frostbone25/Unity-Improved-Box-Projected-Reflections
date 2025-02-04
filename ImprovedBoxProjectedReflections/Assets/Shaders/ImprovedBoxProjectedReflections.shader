@@ -25,6 +25,7 @@
 
         [Toggle(_WHITE_NOISE)] _WhiteNoise("Use White Noise", Float) = 1
         [Toggle(_ANIMATE_NOISE)] _AnimateNoise("Animate Noise", Float) = 0
+        [Toggle(_RAYTRACE_MIP_OFFSET)] _EnableMipOffsetForRaytracing("Use Mip Offset During Raytracing", Float) = 0
 
         [Header(Experimental)]
         [Toggle(_EXPERIMENTAL_2X2_BLUR)] _Enable2x2Blur("Use Quad Intrinsics 2x2 Blur", Float) = 0
@@ -60,6 +61,7 @@
             //||||||||||||||||||||||||||||| UNITY3D KEYWORDS |||||||||||||||||||||||||||||
             //||||||||||||||||||||||||||||| UNITY3D KEYWORDS |||||||||||||||||||||||||||||
 
+            //NOTE: This is here only because of Quad Intrinsics
             #pragma target 5.0
 
             #pragma fragmentoption ARB_precision_hint_fastest
@@ -78,6 +80,7 @@
             #pragma shader_feature_local _DETERMINISTIC_SAMPLING
             #pragma shader_feature_local _WHITE_NOISE
             #pragma shader_feature_local _ANIMATE_NOISE
+            #pragma shader_feature_local _RAYTRACE_MIP_OFFSET
             #pragma shader_feature_local _EXPERIMENTAL_BEVELED_BOX_PROJECTION
             #pragma shader_feature_local _EXPERIMENTAL_BEVELED_BOX_OFFSET
             #pragma shader_feature_local _EXPERIMENTAL_2X2_BLUR
@@ -393,6 +396,30 @@
                     int samples = int(_Samples);
                     int accumulatedSamples = 0;
 
+                    //mip level for the reflection sampling, ideally it'd be the first mip level only since we are "convolving" the reflection.
+                    //However later with _RAYTRACE_MIP_OFFSET, this is a cheat that's used as a way of getting usable results with fewer samples
+                    float mip = 0.0f;
+
+                    //use our prior approximation methods to offset the mip level the farther we are.
+                    //this can help reduce noise at the cost of accuracy/quality
+                    #if defined (_RAYTRACE_MIP_OFFSET)
+                        //sample our own unique reflection direction for this method
+                        float3 vector_mipOffsetReflectionDirection = reflect(-vector_viewDirection, vector_normalDirection);
+
+                        //compute the original mip level that we normally would be at with the classic/approximation methods...
+                        float raytraceMipOriginal = UnityPerceptualRoughnessToMipmapLevel(perceptualRoughness);
+                        float raytraceMipOffset = 0; //will contain the "projectionDistance" or "hit distance" to the edge of the box bounds
+                        
+                        //do our unique box projection
+                        vector_mipOffsetReflectionDirection = UnityBoxProjectedCubemapDirectionDefault(vector_mipOffsetReflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, raytraceMipOffset);
+
+                        //use clamp so mip level doesn't get offset so high and look funky
+                        raytraceMipOffset = clamp(raytraceMipOffset, 0.0f, UNITY_SPECCUBE_LOD_STEPS);
+
+                        //compute new mip level based on the raytraceMipOffset value (this is mostly arbitrary)
+                        mip = lerp(0.0f, raytraceMipOriginal, raytraceMipOffset / UNITY_SPECCUBE_LOD_STEPS);
+                    #endif
+
                     //start firing multiple samples!
                     for (int i = 0; i < samples; i++)
                     {
@@ -430,7 +457,7 @@
                             #endif
 
                             //sample the provided reflection cubemap using the current ray direction
-                            float4 enviormentReflectionSample = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, vector_reflectionDirection.xyz, 0);
+                            float4 enviormentReflectionSample = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, vector_reflectionDirection.xyz, mip);
 
                             //decode the reflection if it's HDR
                             enviormentReflectionSample.rgb = DecodeHDR(enviormentReflectionSample, unity_SpecCube0_HDR);
