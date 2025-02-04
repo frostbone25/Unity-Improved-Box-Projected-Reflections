@@ -9,7 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: ReflectiveMaterial
   m_Shader: {fileID: 4800000, guid: 20c7306c14bd2ae43871ea3ec5e58b65, type: 3}
-  m_ShaderKeywords: _CONTACTHARDENINGTYPE_TRACED _CONTACT_HARDENING _NORMALMAP
+  m_ShaderKeywords: _APPROXIMATED_CLAMP _CONTACTHARDENINGTYPE_APPROXIMATED _CONTACTHARDENINGTYPE_RAYTRACED
+    _CONTACT_HARDENING _NORMALMAP _REFLECTIONRENDERINGTYPE_RAYTRACING
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -19,6 +20,22 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _BlueNoise:
+        m_Texture: {fileID: 11700000, guid: 6165f46eab886d74e8c56ab8296ecbe0, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BlueNoise2:
+        m_Texture: {fileID: 2800000, guid: 989aac1a94eaba24bae079871fd4c404, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BlueNoise3:
+        m_Texture: {fileID: 2800000, guid: 6fb1a0b4c77010c45b5ce827dd5f790b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BlueNoise4:
+        m_Texture: {fileID: 2800000, guid: 3704234177671f7429091f1bc2d3e5ae, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 2800000, guid: 7c5d6c9e8ce0dc640b14bd4583a9dfba, type: 3}
         m_Scale: {x: 0.25, y: 0.25}
@@ -56,15 +73,19 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
+    - _AnimateNoise: 0
+    - _ApproximationClamp: 1
     - _BevelBoxOffset: 0
-    - _BevelFactor: 1
+    - _BevelFactor: 0.7
+    - _BlueNoiseMaxSlices: 64
     - _BumpScale: 0
-    - _ContactHardeningType: 2
+    - _ContactHardeningType: 1
     - _Cutoff: 0.5
     - _DebugForceRough: 0
     - _DebugForceSmooth: 0
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
+    - _Enable2x2Blur: 0
     - _EnableBevelBoxProjection: 0
     - _EnableContactHardening: 1
     - _GlossMapScale: 1
@@ -74,14 +95,18 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
+    - _ReflectionRenderingType: 3
+    - _Samples: 64
     - _Seed: 0
-    - _Smoothness: 0.634
+    - _Smoothness: 0.735
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _Test1: 64
-    - _TraceSamples: 16
+    - _TraceSamples: 256
     - _UVSec: 0
+    - _UseDeterministicSampling: 0
+    - _WhiteNoise: 0
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

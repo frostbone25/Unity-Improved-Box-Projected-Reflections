@@ -101,7 +101,26 @@ float roundedboxIntersectFlipped(float3 ro, float3 rd, float3 size, float rad)
     return t;
 }
 
-inline float3 ModifiedBoxProjectedCubemapDirection(float3 worldRefl, float3 worldPos, float4 cubemapCenter, float4 boxMin, float4 boxMax, out float fa, float factor)
+//Bevel Box Projection (With No Intersection Test Output)
+inline float3 ModifiedBoxProjectedCubemapDirection(float3 worldRefl, float3 worldPos, float4 cubemapCenter, float4 boxMin, float4 boxMax, float factor)
+{
+#if defined (_EXPERIMENTAL_BEVELED_BOX_OFFSET)
+        boxMax.xyz = boxMax.xyz - float3(factor, factor, factor);
+        boxMin.xyz = boxMin.xyz + float3(factor, factor, factor);
+#endif
+
+    worldPos -= cubemapCenter.xyz;
+
+    float intersectionTest = roundedboxIntersectFlipped(worldPos, worldRefl, (boxMax - boxMin) * 0.5, factor);
+
+    float3 nrdir = normalize(worldRefl);
+    float3 modifiedWorldRefl = worldPos + nrdir * intersectionTest;
+
+    return modifiedWorldRefl;
+}
+
+//Bevel Box Projection (With Intersection Test Output)
+inline float3 ModifiedBoxProjectedCubemapDirection(float3 worldRefl, float3 worldPos, float4 cubemapCenter, float4 boxMin, float4 boxMax, out float intersectionTest, float factor)
 {
     #if defined (_EXPERIMENTAL_BEVELED_BOX_OFFSET)
         boxMax.xyz = boxMax.xyz - float3(factor, factor, factor);
@@ -110,8 +129,7 @@ inline float3 ModifiedBoxProjectedCubemapDirection(float3 worldRefl, float3 worl
 
     worldPos -= cubemapCenter.xyz;
 
-    float intersectionTest = roundedboxIntersectFlipped(worldPos, worldRefl, (boxMax - boxMin) * 0.5, factor);
-    fa = intersectionTest;
+    intersectionTest = roundedboxIntersectFlipped(worldPos, worldRefl, (boxMax - boxMin) * 0.5, factor);
 
     float3 nrdir = normalize(worldRefl);
     float3 modifiedWorldRefl = worldPos + nrdir * intersectionTest;
