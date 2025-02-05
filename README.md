@@ -143,8 +143,9 @@ With box occlusion, there is an added darkening that is introduced. Eliminating 
 
 ### Credits / Sources
 
-- **[Inigo Quilez](https://iquilezles.org/articles/intersectors/)**
+- **[Inigo Quilez](https://iquilezles.org/articles/intersectors/)**: Beveled Box Code
 - **[Christoph Peters](http://momentsingraphics.de/BlueNoise.html)**: Free blue noise textures.
-- **[Unity HDRP](https://github.com/Unity-Technologies/Graphics/blob/504e639c4e07492f74716f36acf7aad0294af16e/Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/)**
-- **[Unity SRP Core](https://github.com/Unity-Technologies/Graphics/blob/504e639c4e07492f74716f36acf7aad0294af16e/Packages/com.unity.render-pipelines.core/ShaderLibrary/)**
-- **[Unity.cginc](https://github.com/TwoTailsGames/Unity-Built-in-Shaders/blob/master/CGIncludes/)**
+- **[Unity HDRP](https://github.com/Unity-Technologies/Graphics/blob/504e639c4e07492f74716f36acf7aad0294af16e/Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/)**: Approximated Distance Based Roughness Implementation
+- **[Unity SRP Core](https://github.com/Unity-Technologies/Graphics/blob/504e639c4e07492f74716f36acf7aad0294af16e/Packages/com.unity.render-pipelines.core/ShaderLibrary/)**: Various Functions
+- **[Unity.cginc](https://github.com/TwoTailsGames/Unity-Built-in-Shaders/blob/master/CGIncludes/)**: Unity Box Projection
+- **[Cactus_On_Fire](https://www.reddit.com/r/Unity3D/comments/rtmtfz/i_made_a_shader_that_accurately_diffuses_the/)**: Inital inspiration
