@@ -1,5 +1,5 @@
 # Improved Box Projected Reflections
-A work-in-progress attempt at improving Box Projected Reflections.
+My adventures into improving Box Projected Specular Reflections!
 
 *NOTE: In-case it isn't obvious, most of the examples/images shown here are of a pure metallic/reflective material to show the effects more clearly.*
 
