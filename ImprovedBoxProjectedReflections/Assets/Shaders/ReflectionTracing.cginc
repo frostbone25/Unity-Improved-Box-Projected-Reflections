@@ -207,3 +207,40 @@ float2 Hammersley2d(uint i, uint maxSampleCount)
 {
     return float2(float(i) / float(maxSampleCount), RadicalInverse_VdC(i));
 }
+
+//SOURCE - https://auzaiffe.wordpress.com/2024/04/15/vndf-importance-sampling-an-isotropic-distribution/
+//u = pair of random values
+//wi = world space view vector
+//alpha = isotropic roughness
+//n = world space normal vector
+float3 sample_vndf_isotropic(float2 u, float3 wi, float alpha, float3 n)
+{
+    // decompose the floattor in parallel and perpendicular components
+    float3 wi_z = -n * dot(wi, n);
+    float3 wi_xy = wi + wi_z;
+ 
+    // warp to the hemisphere configuration
+    float3 wiStd = -normalize(alpha * wi_xy + wi_z);
+ 
+    // sample a spherical cap in (-wiStd.z, 1]
+    float wiStd_z = dot(wiStd, n);
+    float z = 1.0 - u.y * (1.0 + wiStd_z);
+    float sinTheta = sqrt(saturate(1.0f - z * z));
+    float phi = UNITY_TWO_PI * u.x - UNITY_PI;
+    float x = sinTheta * cos(phi);
+    float y = sinTheta * sin(phi);
+    float3 cStd = float3(x, y, z);
+ 
+    // reflect sample to align with normal
+    float3 up = float3(0, 0, 1.000001); // Used for the singularity
+    float3 wr = n + up;
+    float3 c = dot(wr, cStd) * wr / wr.z - cStd;
+ 
+    // compute halfway direction as standard normal
+    float3 wmStd = c + wiStd;
+    float3 wmStd_z = n * dot(n, wmStd);
+    float3 wmStd_xy = wmStd_z - wmStd;
+     
+    // return final normal
+    return normalize(alpha * wmStd_xy + wmStd_z);
+}

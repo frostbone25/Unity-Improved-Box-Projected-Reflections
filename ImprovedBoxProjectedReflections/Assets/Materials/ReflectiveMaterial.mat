@@ -10,7 +10,7 @@ Material:
   m_Name: ReflectiveMaterial
   m_Shader: {fileID: 4800000, guid: 20c7306c14bd2ae43871ea3ec5e58b65, type: 3}
   m_ShaderKeywords: _APPROXIMATED_CLAMP _CONTACTHARDENINGTYPE_APPROXIMATED _CONTACTHARDENINGTYPE_RAYTRACED
-    _CONTACT_HARDENING _NORMALMAP _REFLECTIONRENDERINGTYPE_APPROXIMATED
+    _CONTACT_HARDENING _DETERMINISTIC_SAMPLING _NORMALMAP _REFLECTIONRENDERINGTYPE_RAYTRACING
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -77,8 +77,9 @@ Material:
     - _ApproximationClamp: 1
     - _BevelBoxOffset: 0
     - _BevelFactor: 0.7
+    - _BlueNoiseFrameRate: 120
     - _BlueNoiseMaxSlices: 64
-    - _BumpScale: 0.25
+    - _BumpScale: 0.2
     - _ContactHardeningType: 1
     - _Cutoff: 0.5
     - _DebugForceRough: 0
@@ -91,8 +92,8 @@ Material:
     - _EnableContactHardening: 1
     - _EnableMipOffsetForRaytracing: 0
     - _ExperimentalSpecularOcclusionIntensity: 1
-    - _ExperimentalSpecularOcclusionMultiplier: 0.13
-    - _ExperimentalSpecularOcclusionPower: 1.24
+    - _ExperimentalSpecularOcclusionMultiplier: 1
+    - _ExperimentalSpecularOcclusionPower: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.756
     - _GlossyReflections: 1
@@ -100,17 +101,17 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _ReflectionRenderingType: 1
+    - _ReflectionRenderingType: 3
     - _Samples: 64
     - _Seed: 0
-    - _Smoothness: 0.672
+    - _Smoothness: 0.65
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _Test1: 64
     - _TraceSamples: 256
     - _UVSec: 0
-    - _UseDeterministicSampling: 0
+    - _UseDeterministicSampling: 1
     - _WhiteNoise: 0
     - _ZWrite: 1
     m_Colors:

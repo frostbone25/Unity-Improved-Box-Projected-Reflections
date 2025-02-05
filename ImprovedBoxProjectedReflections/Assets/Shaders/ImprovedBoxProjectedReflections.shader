@@ -22,6 +22,7 @@
         //using precomputed blue noise 3D texture with different variations on each slice
         _BlueNoise("Blue Noise", 3D) = "white" {}
         _BlueNoiseMaxSlices("Blue Noise Max Slices", Float) = 64
+        _BlueNoiseFrameRate("Blue Noise Cycle Frame Rate", Float) = 60
 
         [Toggle(_WHITE_NOISE)] _WhiteNoise("Use White Noise", Float) = 1
         [Toggle(_ANIMATE_NOISE)] _AnimateNoise("Animate Noise", Float) = 0
@@ -125,6 +126,7 @@
 
             sampler3D _BlueNoise;
             int _BlueNoiseMaxSlices;
+            int _BlueNoiseFrameRate;
             float4 _BlueNoise_TexelSize; //(X = 1 / Width | Y = 1 / Height | Z = Width | W = Height)
 
             float _ExperimentalSpecularOcclusionIntensity;
@@ -142,6 +144,15 @@
             half UnityPerceptualRoughnessToMipmapLevel(half perceptualRoughness)
             {
                 return perceptualRoughness * UNITY_SPECCUBE_LOD_STEPS;
+            }
+
+            float ComputeBlueNoiseFrameIndex()
+            {
+                // Compute frame index that loops from 0 to 63
+                float frame = fmod(_Time.y * _BlueNoiseFrameRate, _BlueNoiseMaxSlices);
+
+                // Normalize to [0, 1] range for texture sampling
+                return frame / (_BlueNoiseMaxSlices - 1);
             }
 
             //||||||||||||||||||||||||||||| MESH DATA STRUCT |||||||||||||||||||||||||||||
@@ -393,7 +404,15 @@
                     float perceptualRoughness = 1.0 - _Smoothness;
                     float roughness = perceptualRoughness * perceptualRoughness; //offical roughness term for pbr shading
 
-                    int samples = int(_Samples);
+                    #if defined (_ANIMATE_NOISE)
+                        //for animated noise, samples should start at 1.
+                        //the reason being the point of animated noise is to be able to converge multiple samples over multiple frames.
+                        //
+                        int samples = 1;
+                    #else
+                        int samples = int(_Samples);
+                    #endif
+
                     int accumulatedSamples = 0;
 
                     //mip level for the reflection sampling, ideally it'd be the first mip level only since we are "convolving" the reflection.
@@ -432,13 +451,19 @@
                             #if defined(_WHITE_NOISE) //sample random white noise
                                 sampling = float2(GenerateRandomFloat(screenUV), GenerateRandomFloat(screenUV));
                             #else //sample precomputed blue noise
-                                float4 sampledBlueNoiseTexture = tex3Dlod(_BlueNoise, float4(screenUV * _ScreenParams.xy * _BlueNoise_TexelSize.xy, (1.0f / _BlueNoiseMaxSlices) * i, 0));
+                                #if defined (_ANIMATE_NOISE)
+                                    float sliceValue = ComputeBlueNoiseFrameIndex();
+                                #else
+                                    float sliceValue = (1.0f / _BlueNoiseMaxSlices) * i;
+                                #endif
+
+                                float4 sampledBlueNoiseTexture = tex3Dlod(_BlueNoise, float4(screenUV * _ScreenParams.xy * _BlueNoise_TexelSize.xy, sliceValue, 0));
                                 sampling = sampledBlueNoiseTexture.xy;
                             #endif
                         #endif
 
                         //output bool from GGX function if the current ray direction is valid
-                        bool valid;
+                        bool valid = true;
 
                         //sample a ray direction based on the random noise!
                         half3 vector_reflectionDirection = ImportanceSampleGGX_VNDF(sampling, vector_normalDirection, vector_viewDirection, roughness, valid);
