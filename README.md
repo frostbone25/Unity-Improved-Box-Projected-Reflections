@@ -31,7 +31,7 @@ This is a marginal improvement over the classic method, and it's really cheap!
 
 ![3](GithubContent/compare-a-approx-hdrp.png)
 
-This I found about recently, where Unity HDRP had a very similar implementation to the original approximation I stumbled upon. The difference being that the approximation used here is less obvious/extreme than the other original approximation I had, and it tries to stay somewhat physically plausible. Comparing it to ground truth it is closer in some cases than the other, for a very similar cost.
+This I found about recently, where [Unity HDRP](https://docs.unity.cn/Packages/com.unity.render-pipelines.high-definition@13.1/manual/whats-new-10.html) had a very similar implementation to the original approximation I stumbled upon. The difference being that the approximation used here is less obvious/extreme than the other original approximation I had, and it tries to stay somewhat physically plausible. Comparing it to ground truth it is closer in some cases than the other, for a very similar cost.
 
 Once again, a big improvement over the classic method, and it's really cheap!
 
@@ -149,3 +149,4 @@ With box occlusion, there is an added darkening that is introduced. Eliminating 
 - **[Unity SRP Core](https://github.com/Unity-Technologies/Graphics/blob/504e639c4e07492f74716f36acf7aad0294af16e/Packages/com.unity.render-pipelines.core/ShaderLibrary/)**: Various Functions
 - **[Unity.cginc](https://github.com/TwoTailsGames/Unity-Built-in-Shaders/blob/master/CGIncludes/)**: Unity Box Projection
 - **[Cactus_On_Fire](https://www.reddit.com/r/Unity3D/comments/rtmtfz/i_made_a_shader_that_accurately_diffuses_the/)**: Inital inspiration
+- **George**: Tipping me off to Unity HDRP's implementation
