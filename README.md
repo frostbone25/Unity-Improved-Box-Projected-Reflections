@@ -39,7 +39,7 @@ Once again, a big improvement over the classic method, and it's really cheap!
 
 ![3](GithubContent/compare-a-raytrace.png)
 
-This is the most accurate method out of the previous ones we had. This is equivalent to ground truth, and unlike the approximations it can properly model anisotropic specular *(specular elongation)*. It's the most accurate and best looking one. However in comparison it is more complicated and slower than previous methods and requires alot of samples to mitigate artifacts *(NOTE: More on this later)*.
+This is the most accurate method out of the previous ones we had. This is equivalent to ground truth, and unlike the approximations it can properly model anisotropic specular *(specular elongation)*. It's the most accurate and best looking one. However in comparison it is more complicated and slower than previous methods and requires alot of samples to mitigate artifacts *(More on this later)*.
 
 It's a massive improvement over the classic method, but it's more complicated and expensive *(Again more on this later, it's not as bad as you think)*
 
@@ -61,7 +61,7 @@ Earlier we mentioned that while this method is the most accurate and high qualit
 
 The current implementation also is using an Importance Sampled GGX Function for specular convolution, at 64 samples.
 
-The blue noise also being used later in the examples/project is a precomputed 3D Texture with 64 slices (64 iterations). The 3D texture being built from 64 slices of precomputed blue noise textures from [Moments in Graphics by Christoph Peters](https://momentsingraphics.de/BlueNoise.html). NOTE: I do have precomputed [Spatio-Temporal Blue Noise (STBN)](https://developer.nvidia.com/blog/rendering-in-real-time-with-spatiotemporal-blue-noise-textures-part-1/) volumes in the project that I also combined, however for some reason the result's I got were worse than with the ones from [Christoph Peters](https://momentsingraphics.de/BlueNoise.html). Might be something I did wrong or incorrectly, someone let me know please!
+The blue noise also being used later in the examples/project is a precomputed 3D Texture with 64 slices (64 iterations). The 3D texture being built from 64 slices of precomputed blue noise textures from [Moments in Graphics by Christoph Peters](https://momentsingraphics.de/BlueNoise.html). I do also have precomputed [Spatio-Temporal Blue Noise (STBN)](https://developer.nvidia.com/blog/rendering-in-real-time-with-spatiotemporal-blue-noise-textures-part-1/) volumes in the project that I also combined, however for some reason the result's I got were worse than with the ones from [Christoph Peters](https://momentsingraphics.de/BlueNoise.html). Might be something I did wrong or incorrectly, someone let me know please!
 
 #### Static Noise *(Non-Deterministic Sampling)*
 
