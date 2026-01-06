@@ -33,6 +33,7 @@ Cubemap Reflections are a very common and simple way to provide reflection/specu
 A probe is placed at a specific point, and at runtime *(or during baking)* a camera captures the scene at 6 different orientations *(90 degrees, within a square)*. 
 
 ![learn-open-gl-cubemap-graphic](GithubContent/learn-open-gl-cubemap-graphic.png)
+
 *Graphic from [LearnOpenGL](https://learnopengl.com/Advanced-OpenGL/Cubemaps)*
 
 Each of the faces of this "cube" are combined into a cubemap texture asset. Then this texture asset goes through an additional process step called "specular convolution" which effectively generates a convolved or "blurred" version of the cubemap that coresponds with "rougher" reflections that get stored in the mips of the texture.
