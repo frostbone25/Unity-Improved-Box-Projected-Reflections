@@ -9,8 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: ReflectiveMaterial
   m_Shader: {fileID: 4800000, guid: 20c7306c14bd2ae43871ea3ec5e58b65, type: 3}
-  m_ShaderKeywords: _APPROXIMATED_CLAMP _CONTACTHARDENINGTYPE_APPROXIMATED _CONTACTHARDENINGTYPE_RAYTRACED
-    _CONTACT_HARDENING _DETERMINISTIC_SAMPLING _NORMALMAP _REFLECTIONRENDERINGTYPE_RAYTRACING
+  m_ShaderKeywords: _BOX_PROJECTION _CONTACTHARDENINGTYPE_APPROXIMATED _CONTACTHARDENINGTYPE_RAYTRACED
+    _CONTACT_HARDENING _NORMALMAP _REFLECTIONRENDERINGTYPE_APPROXIMATEDGODOT
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -74,16 +74,20 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _AnimateNoise: 0
-    - _ApproximationClamp: 1
+    - _ApproximationClamp: 0
+    - _ApproximationGodotFresnelPower: 2
     - _BevelBoxOffset: 0
     - _BevelFactor: 0.7
     - _BlueNoiseFrameRate: 120
     - _BlueNoiseMaxSlices: 64
-    - _BumpScale: 0.2
+    - _BoxProjection: 1
+    - _BumpScale: 0
     - _ContactHardeningType: 1
     - _Cutoff: 0.5
     - _DebugForceRough: 0
     - _DebugForceSmooth: 0
+    - _DebugMipLevel: 2.7
+    - _DebugMipLevels: 0
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _Enable2x2Blur: 0
@@ -104,14 +108,14 @@ Material:
     - _ReflectionRenderingType: 3
     - _Samples: 64
     - _Seed: 0
-    - _Smoothness: 0.65
+    - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _Test1: 64
     - _TraceSamples: 256
     - _UVSec: 0
-    - _UseDeterministicSampling: 1
+    - _UseDeterministicSampling: 0
     - _WhiteNoise: 0
     - _ZWrite: 1
     m_Colors:

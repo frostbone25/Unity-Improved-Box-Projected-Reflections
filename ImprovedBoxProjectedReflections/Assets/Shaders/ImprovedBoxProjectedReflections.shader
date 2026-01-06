@@ -9,11 +9,19 @@
         _BumpScale("Normal Strength", Float) = 1
         [Normal] _BumpMap("Normal Map", 2D) = "bump" {}
 
+		[Header(Debug)]
+		[Toggle(_DEBUG_MIP_LEVEL)] _DebugMipLevels("Debug Mip Level", Float) = 0
+		_DebugMipLevel("Mip Level", Float) = 0
+
         [Header(Cubemap Rendering Type)]
-        [KeywordEnum(None, Approximated, ApproximatedHDRP, Raytracing)] _ReflectionRenderingType("Contact Hardening Type", Float) = 1
+		[Toggle(_BOX_PROJECTION)] _BoxProjection("Box Projection", Float) = 1
+        [KeywordEnum(None, Approximated, ApproximatedHDRP, ApproximatedGodot, Raytracing)] _ReflectionRenderingType("Contact Hardening Type", Float) = 1
 
         [Header(Approximated)]
         [Toggle(_APPROXIMATED_CLAMP)] _ApproximationClamp("Clamp Mip Offset On Approximation", Float) = 1
+
+		[Header(Approximated Godot)]
+		_ApproximationGodotFresnelPower("Fresnel Power", Float) = 4
 
         [Header(Raytracing)]
         [Toggle(_DETERMINISTIC_SAMPLING)] _UseDeterministicSampling("Use Deterministic Sampling", Float) = 0
@@ -75,8 +83,10 @@
             //||||||||||||||||||||||||||||| CUSTOM KEYWORDS |||||||||||||||||||||||||||||
             //||||||||||||||||||||||||||||| CUSTOM KEYWORDS |||||||||||||||||||||||||||||
 
-            #pragma multi_compile _REFLECTIONRENDERINGTYPE_NONE _REFLECTIONRENDERINGTYPE_APPROXIMATED _REFLECTIONRENDERINGTYPE_APPROXIMATEDHDRP _REFLECTIONRENDERINGTYPE_RAYTRACING
+            #pragma multi_compile _REFLECTIONRENDERINGTYPE_NONE _REFLECTIONRENDERINGTYPE_APPROXIMATED _REFLECTIONRENDERINGTYPE_APPROXIMATEDHDRP _REFLECTIONRENDERINGTYPE_APPROXIMATEDGODOT _REFLECTIONRENDERINGTYPE_RAYTRACING
 
+			#pragma shader_feature_local _BOX_PROJECTION
+			#pragma shader_feature_local _DEBUG_MIP_LEVEL
             #pragma shader_feature_local _APPROXIMATED_CLAMP
             #pragma shader_feature_local _DETERMINISTIC_SAMPLING
             #pragma shader_feature_local _WHITE_NOISE
@@ -124,6 +134,10 @@
 
             float _Samples;
 
+			float _DebugMipLevel;
+
+			float _ApproximationGodotFresnelPower;
+
             sampler3D _BlueNoise;
             int _BlueNoiseMaxSlices;
             int _BlueNoiseFrameRate;
@@ -148,10 +162,10 @@
 
             float ComputeBlueNoiseFrameIndex()
             {
-                // Compute frame index that loops from 0 to 63
+                //compute frame index that loops from 0 to 63
                 float frame = fmod(_Time.y * _BlueNoiseFrameRate, _BlueNoiseMaxSlices);
 
-                // Normalize to [0, 1] range for texture sampling
+                //normalize to [0, 1] range for texture sampling
                 return frame / (_BlueNoiseMaxSlices - 1);
             }
 
@@ -268,7 +282,7 @@
                 //||||||||||||||||||||||||||||||| REFLECTIONS TYPE: NONE |||||||||||||||||||||||||||||||
                 //This is the classic method of sampling box projected cubemap reflections.
                 //The reflection cubemap is sampled at a given mip level, and projected against the bounding box of the reflection probe.
-                #if defined (_REFLECTIONRENDERINGTYPE_NONE)
+                #if defined (_REFLECTIONRENDERINGTYPE_NONE) && defined (_BOX_PROJECTION)
                     //compute reflection vector
                     float3 vector_reflectionDirection = reflect(-vector_viewDirection, vector_normalDirection);
 
@@ -281,15 +295,17 @@
 
                     //remap our smoothness parameter to PBR roughness
                     float perceptualRoughness = 1.0 - _Smoothness;
-                    float roughness = perceptualRoughness * perceptualRoughness; //offical roughness term for pbr shading
+                    float roughness = perceptualRoughness * perceptualRoughness;
 
                     //compute the cubemap mip level based on perceptual roughness
                     float mip = UnityPerceptualRoughnessToMipmapLevel(perceptualRoughness);
 
+					#if defined (_DEBUG_MIP_LEVEL)
+						mip = _DebugMipLevel;
+					#endif
+
                     //sample the environment reflection
                     enviormentReflection = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, vector_reflectionDirection.xyz, mip);
-
-                    //decode the environment reflection if it's HDR encoded
                     enviormentReflection.rgb = DecodeHDR(enviormentReflection, unity_SpecCube0_HDR);
 
                 //||||||||||||||||||||||||||||||| REFLECTIONS TYPE: APPROXIMATION |||||||||||||||||||||||||||||||
@@ -299,39 +315,42 @@
                 //It uses effectively the same box projected function as Unity does, except the intersection test between the current fragment and the bounds of the box is output.
                 //This value is then used to arbitrarily offset the mip level when sampling the reflection cubemap.
                 //The further the distance, the higher (and blurrier) the mip level of the reflection gets.
-                #elif defined (_REFLECTIONRENDERINGTYPE_APPROXIMATED)
+                #elif defined (_REFLECTIONRENDERINGTYPE_APPROXIMATED) && defined (_BOX_PROJECTION)
                     //compute reflection vector
                     float3 vector_reflectionDirection = reflect(-vector_viewDirection, vector_normalDirection);
 
                     //remap our smoothness parameter to PBR roughness
                     float perceptualRoughness = 1.0 - _Smoothness;
-                    float roughness = perceptualRoughness * perceptualRoughness; //offical roughness term for pbr shading
+                    float roughness = perceptualRoughness * perceptualRoughness;
 
                     //compute the cubemap mip level based on perceptual roughness
                     float mipOriginal = UnityPerceptualRoughnessToMipmapLevel(perceptualRoughness);
 
                     //this will store the "intersectionDistance" result from the box projection
-                    float mipOffset = 0;
+                    float intersectionDistance = 0;
 
                     //if box projection is enabled, modify our vector to project reflections onto a world space box (defined by the reflection probe)
                     #if defined (_EXPERIMENTAL_BEVELED_BOX_PROJECTION)
-                        vector_reflectionDirection = ModifiedBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset, _BevelFactor);
+                        vector_reflectionDirection = ModifiedBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, intersectionDistance, _BevelFactor);
                     #else
-                        vector_reflectionDirection = UnityBoxProjectedCubemapDirectionDefault(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, mipOffset);
+                        vector_reflectionDirection = UnityBoxProjectedCubemapDirectionDefault(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, intersectionDistance);
                     #endif
 
                     //NEW: Added a clamp to the mip offset, helps to make sure that when a fragment is far away the mip level doesn't climb to a high value and look wierd
+					//this tends to look much better when clamped
                     #if defined (_APPROXIMATED_CLAMP)
-                        mipOffset = clamp(mipOffset, 0.0f, UNITY_SPECCUBE_LOD_STEPS);
+                        intersectionDistance = clamp(intersectionDistance, 0.0f, UNITY_SPECCUBE_LOD_STEPS);
                     #endif
 
-                    //compute new mip level based on the mipOffset value (this is mostly arbitrary)
-                    float mip = lerp(0.0f, mipOriginal, mipOffset / UNITY_SPECCUBE_LOD_STEPS);
+                    //compute new mip level based on the intersectionDistance value (this is mostly arbitrary)
+                    float mip = lerp(0.0f, mipOriginal, intersectionDistance / UNITY_SPECCUBE_LOD_STEPS);
+
+					#if defined (_DEBUG_MIP_LEVEL)
+						mip = _DebugMipLevel;
+					#endif
 
                     //sample the provided reflection probe at the given mip level
                     enviormentReflection = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, vector_reflectionDirection.xyz, mip);
-
-                    //decode the reflection if it's HDR
                     enviormentReflection.rgb = DecodeHDR(enviormentReflection, unity_SpecCube0_HDR);
 
                 //||||||||||||||||||||||||||||||| REFLECTIONS TYPE: APPROXIMATION HDRP |||||||||||||||||||||||||||||||
@@ -340,7 +359,7 @@
                 //This is an approximation method found in HDRP I found out about.
                 //It works in the same exact way conceptually as my old approximation.
                 //However, the math in regard to choosing the correct mip level based on roughness/distance is much more accurate.
-                #elif defined (_REFLECTIONRENDERINGTYPE_APPROXIMATEDHDRP)
+                #elif defined (_REFLECTIONRENDERINGTYPE_APPROXIMATEDHDRP) && defined (_BOX_PROJECTION)
                     //compute reflection vector
                     float3 vector_reflectionDirection = reflect(-vector_viewDirection, vector_normalDirection);
 
@@ -356,7 +375,7 @@
                     //the output of distanceBasedRoughness is the new perceptual roughness
                     perceptualRoughness = distanceBasedRoughness;
 
-                    float roughness = perceptualRoughness * perceptualRoughness; //offical roughness term for pbr shading
+                    float roughness = perceptualRoughness * perceptualRoughness;
 
                     //compute the cubemap mip level based on perceptual roughness
                     float mip = UnityPerceptualRoughnessToMipmapLevel(distanceBasedRoughness);
@@ -385,10 +404,71 @@
                         mip = UnityPerceptualRoughnessToMipmapLevel(distanceBasedRoughness);
                     #endif
 
+					#if defined (_DEBUG_MIP_LEVEL)
+						mip = _DebugMipLevel;
+					#endif
+
                     //sample the provided reflection probe at the given mip level
                     enviormentReflection = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, vector_reflectionDirection.xyz, mip);
+                    enviormentReflection.rgb = DecodeHDR(enviormentReflection, unity_SpecCube0_HDR);
 
-                    //decode the reflection if it's HDR
+                //||||||||||||||||||||||||||||||| REFLECTIONS TYPE: APPROXIMATION GODOT |||||||||||||||||||||||||||||||
+                //||||||||||||||||||||||||||||||| REFLECTIONS TYPE: APPROXIMATION GODOT |||||||||||||||||||||||||||||||
+                //||||||||||||||||||||||||||||||| REFLECTIONS TYPE: APPROXIMATION GODOT |||||||||||||||||||||||||||||||
+                //This is an approximation method that improved upon both HDRP by adding a fresnel term
+                //It works in the same exact way conceptually as my old approximation.
+                //However, the math in regard to choosing the correct mip level based on roughness/distance is even more accurate (results were checked against blender cycles)
+                #elif defined (_REFLECTIONRENDERINGTYPE_APPROXIMATEDGODOT) && defined (_BOX_PROJECTION)
+
+					//calculate a basic fresnel term (cheap)
+					float fresnelTerm = 1.0f - max(dot(vector_normalDirection, vector_viewDirection), 0.0f);
+					
+					//note: higher power means that you effectively need to be closer to the surface for the contact hardening to appear
+					fresnelTerm = pow(fresnelTerm, _ApproximationGodotFresnelPower);
+					//fresnelTerm = fresnelTerm * fresnelTerm; //hardcoded pow 2.0
+					//fresnelTerm = fresnelTerm * fresnelTerm * fresnelTerm; //hardcoded pow 3.0
+					//fresnelTerm = fresnelTerm * fresnelTerm * fresnelTerm * fresnelTerm; //hardcoded pow 4.0 (this was the chosen value in the original godot improvement)
+
+                    //compute reflection vector
+                    float3 vector_reflectionDirection = reflect(-vector_viewDirection, vector_normalDirection);
+
+                    //remap our smoothness parameter to PBR roughness
+                    float perceptualRoughness = 1.0 - _Smoothness;
+                    float roughness = perceptualRoughness * perceptualRoughness;
+
+                    //compute the cubemap mip level based on perceptual roughness
+                    float mipOriginal = UnityPerceptualRoughnessToMipmapLevel(perceptualRoughness);
+
+                    //this will store the "intersectionDistance" result from the box projection
+                    float intersectionDistance = 0;
+
+                    //if box projection is enabled, modify our vector to project reflections onto a world space box (defined by the reflection probe)
+                    #if defined (_EXPERIMENTAL_BEVELED_BOX_PROJECTION)
+                        vector_reflectionDirection = ModifiedBoxProjectedCubemapDirection(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, intersectionDistance, _BevelFactor);
+                    #else
+                        vector_reflectionDirection = UnityBoxProjectedCubemapDirectionDefault(vector_reflectionDirection, vector_worldPosition, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax, intersectionDistance);
+                    #endif
+
+					//remap distance to be relative to amount of mips.
+                    float reflectionRoughness = intersectionDistance / UNITY_SPECCUBE_LOD_STEPS;
+
+					//reflection roughness shifts depending on the fresnel term
+					reflectionRoughness *= 1.0 - fresnelTerm;
+
+					//increase roughness when viewing angle is perpendicular to avoid overly sharp reflections on rough surfaces.
+					reflectionRoughness += (1.0 - fresnelTerm) * perceptualRoughness;
+					reflectionRoughness = saturate(reflectionRoughness);
+
+					//ensures fully rough materials don't have reflection contact hardening.
+					float mipMin = (roughness * roughness) * UNITY_SPECCUBE_LOD_STEPS;
+					float mip = lerp(mipMin, mipOriginal, reflectionRoughness);
+
+					#if defined (_DEBUG_MIP_LEVEL)
+						mip = _DebugMipLevel;
+					#endif
+
+                    //sample the provided reflection probe at the given mip level
+                    enviormentReflection = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, vector_reflectionDirection.xyz, mip);
                     enviormentReflection.rgb = DecodeHDR(enviormentReflection, unity_SpecCube0_HDR);
 
                 //||||||||||||||||||||||||||||||| REFLECTIONS TYPE: RAYTRACING |||||||||||||||||||||||||||||||
@@ -397,12 +477,12 @@
                 //This is an accurate method of rendering rough reflections.
                 //However, it introduces noise, and requires alot of samples to be cleaned up.
                 //In addition the current implementation does not take advantage of importance sampling via luminance for the reflection cubemap
-                #elif defined (_REFLECTIONRENDERINGTYPE_RAYTRACING)
+                #elif defined (_REFLECTIONRENDERINGTYPE_RAYTRACING) && defined (_BOX_PROJECTION)
                     float2 screenUV = vertex.screenPos.xy / vertex.screenPos.w;
 
                     //remap our smoothness parameter to PBR roughness
                     float perceptualRoughness = 1.0 - _Smoothness;
-                    float roughness = perceptualRoughness * perceptualRoughness; //offical roughness term for pbr shading
+                    float roughness = perceptualRoughness * perceptualRoughness;
 
                     #if defined (_ANIMATE_NOISE)
                         //for animated noise, samples should start at 1.
@@ -497,7 +577,30 @@
 
                     //divide the accumlated reflection color by accumlated sample count to get the correct brightness
                     enviormentReflection /= accumulatedSamples;
-                #endif
+
+				//||||||||||||||||||||||||||||||| REFLECTIONS TYPE: CLASSIC |||||||||||||||||||||||||||||||
+                //||||||||||||||||||||||||||||||| REFLECTIONS TYPE: CLASSIC |||||||||||||||||||||||||||||||
+                //||||||||||||||||||||||||||||||| REFLECTIONS TYPE: CLASSIC |||||||||||||||||||||||||||||||
+				//classic way of doing cubemap reflections with no box projection
+                #else
+					//compute reflection vector
+                    float3 vector_reflectionDirection = reflect(-vector_viewDirection, vector_normalDirection);
+
+                    //remap our smoothness parameter to PBR roughness
+                    float perceptualRoughness = 1.0 - _Smoothness;
+                    float roughness = perceptualRoughness * perceptualRoughness;
+
+                    //compute the cubemap mip level based on perceptual roughness
+                    float mip = UnityPerceptualRoughnessToMipmapLevel(perceptualRoughness);
+
+					#if defined (_DEBUG_MIP_LEVEL)
+						mip = _DebugMipLevel;
+					#endif
+
+                    //sample the environment reflection
+                    enviormentReflection = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, vector_reflectionDirection.xyz, mip);
+                    enviormentReflection.rgb = DecodeHDR(enviormentReflection, unity_SpecCube0_HDR);
+				#endif
 
                 //experimental feature for using the hit distance to do specular occlusion
                 #if defined (_EXPERIMENTAL_BOX_SPECULAR_OCCLUSION)
