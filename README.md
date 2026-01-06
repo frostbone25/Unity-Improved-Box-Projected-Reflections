@@ -36,7 +36,7 @@ A probe is placed at a specific point, and at runtime *(or during baking)* a cam
 
 *Graphic from [LearnOpenGL](https://learnopengl.com/Advanced-OpenGL/Cubemaps)*
 
-Each of the faces of this "cube" are combined into a cubemap texture asset. Then this texture asset goes through an additional process step called "specular convolution" which effectively generates a convolved or "blurred" version of the cubemap that coresponds with "rougher" reflections that get stored in the mips of the texture.
+Each of the faces of this "cube" are combined into a cubemap texture asset. Then this texture asset goes through an additional process step called "specular convolution" which effectively generates a convolved or "blurred" version of the cubemap that coresponds with "rougher" reflections that get stored in the mips of the texture. *(This is important so when the cubemap reflection gets sampled, objects with rougher surfaces can have blurrier reflections)*
 
 | Mip 0 | Mip 1 | Mip 2 | Mip 3 | Mip 4 | Mip 5 |
  ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
