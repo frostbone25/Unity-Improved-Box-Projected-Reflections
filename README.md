@@ -398,8 +398,8 @@ Once again, a big improvement over the classic method, and it's cheap!
 ![6-box-projectedRayA](GithubContent/6-box-projectedRayA.png)
 
 Code can be found in here...
-- ReflectionTracing.cginc
-- ImprovedBoxProjectedReflections.shader
+- [ReflectionTracing.cginc](https://github.com/frostbone25/Unity-Improved-Box-Projected-Reflections/blob/main/ImprovedBoxProjectedReflections/Assets/Shaders/ReflectionTracing.cginc)
+- [ImprovedBoxProjectedReflections.shader](https://github.com/frostbone25/Unity-Improved-Box-Projected-Reflections/blob/main/ImprovedBoxProjectedReflections/Assets/Shaders/ImprovedBoxProjectedReflections.shader)
 
 This is the most accurate method out of the previous ones we had. This is equivalent to ground truth, and unlike the approximations it can properly model anisotropic specular *(specular elongation)*. It's the most accurate and best looking one. However in comparison it is more complicated and slower than previous methods and requires alot of samples to mitigate artifacts *[(More on this later)](#contact-hardening-raytracing-options)*.
 
